@@ -1,9 +1,7 @@
 import pygame
-# import math
 import random
 import colorsLib as color
-# import math
-# import colour as colour
+
 
 pygame.init()
 smalltext = pygame.font.Font("SCR.otf", 17)
@@ -57,14 +55,18 @@ class Enviroment():
                     self.display_height = update[1]
         return (self.display_width, self.display_height)
 
-
+# creates the window enviroment
 Env = Enviroment(1200, 800, 120, 'sorter')
 
-
+# this is the class for the onscreen sorted pillars, called later in main() to use
 class Objects():
     #comparisons, vs array accesses
     draw_buckets = False
     buckets = [0,0, 0,0, 0,0, 0,0, 0,0]
+
+    # this is the individual vertical pillar, class is needed here because
+    # each tile has to store its color, location and height
+    # as well as having its own draw method
     class Tile():
         def __init__(self, value, color):
             self.value = value
@@ -96,8 +98,6 @@ class Objects():
             color2 = color.RC()
 
         # a list of what items have been checked this last cycle
-        # key:
-        # red tiles are being compared
         self.compared = [None, None, None]  # draws red
         self.focus = [None, None, None]     # draws green
         self.hold = [None, None, None]      # draws dark blue
@@ -108,7 +108,8 @@ class Objects():
         self.color4 = color4
 
         self.regenerate(tiles)
-        
+
+    # used to generate the inbetween colors of each tile
     def color_between(self, color1, color2, start, end, index, offset=0):
         next_color = list(color.black)
         if index == start:
@@ -169,8 +170,7 @@ class Objects():
         #     # print(color.luma(x.color))
 
     def shuffle(self):
-
-        #this block it to check and make sure that the input and output contain the same elements
+        #this block is to check and make sure that the input and output contain the same elements
         beforesum = 0
         for x in self.items:
             beforesum += x.value
@@ -199,7 +199,12 @@ class Objects():
     def draw(self, gameDisplay, display_dims):
         display_height = display_dims[1]
         display_width = display_dims[0]
+
+        # for each tile
         for x in range(0, len(self.items)):
+
+            # check if the tile's color should be temporarily overwritten because the tile was involved in
+            # the sorting process
             draw_color = None
             if not self.items[x]:
                 continue
@@ -213,23 +218,29 @@ class Objects():
             self.items[x].draw((x * (display_width / self.number_of_tiles)), gameDisplay, display_height,
                                self.number_of_tiles, draw_color)
 
+        # reset the special colors
         self.compared = [None, None, None]      # draws red
         self.focus = [None, None, None]         # draws green
         self.hold = [None, None, None]          # draws dark blue
 
+        # for countingsort the buckets are displayed to show the counting process, if the buckets should be drawn then
+        # this is where that happens
         if self.draw_buckets:
             for x in range(0, 10):
                 pygame.draw.rect(Env.gameDisplay, color.white, [x*(Env.display_width / 10)+30, Env.display_height -100, 50, 25])
                 disp_text(str(self.buckets[x]), (x*(Env.display_width / 10) + 55, Env.display_height -85))
 
+    # for use in future to count access requests
     def get_item(self, index):
         return self.items[index]
 
+    # to be used in the future to count swap requests
     def swap_elements(self, element_1, element_2):
         temp = self.items[element_1]
         self.items[element_1] = self.items[element_2]
         self.items[element_2] = temp
 
+    #utility
     def single_item_sort(self, item_number):
         # returns true if a single item is sorted
         return self.items[item_number] == self.items[item_number].value
@@ -249,17 +260,13 @@ class Objects():
 
         return not(problems)
 
-    def ordersort(self):
-        #this may need to be modified, or duplicated + modified for some of the sorts
-        return False
-
     def printout(self):
         string = ""
         for x in self.items:
             string += str(x.value) + " "
         print(string)
 
-
+# a generic function to display some text
 def disp_text(text, location=None, hue=None):
 
     #generates a text surface that is a rect object with the given text on it
@@ -275,7 +282,9 @@ def disp_text(text, location=None, hue=None):
         TextRect.center = (location[0], location[1])
     Env.gameDisplay.blit(TextSurf, TextRect)
 
-
+# sorting algorithms go here
+#note: sorting algorithms are intentionally a bit obfuscated because they need to adhere to a method of operation
+# where they only perform a small number of operations per cycle. this is so the graphical portion has something to show
 class Bubblesort():
     """
     Bubblesort, named because values float like bubbles towards their correct position
@@ -630,6 +639,7 @@ class Radixsort():
     pass
 
 
+# this is needed to make sure that pygame gets to call its quit method
 def quitgame():
     pygame.quit()
     quit()
@@ -645,36 +655,39 @@ def CreateWindow(width, height):
     Display.fill((255, 255, 255))
 
 
+# at the end of each frame pygame needs to do some work, which is called here
 def finish_frame():
     pygame.display.update()  # shows all the things you have previously drawn ^^^^^
     Env.clock.tick(Env.fps)
 
 
-def main_menu():
-    leave = False
-    while True:
-        pygame.draw.rect(Env.gameDisplay, color.dark_red, [100, 100, 100, 100])
-        for event in pygame.event.get():
-            print(event)
-            if leave:
-                break
-            elif event.type == pygame.VIDEORESIZE:
-                CreateWindow(event.w, event.h)
-                Env.display_dims((event.w, event.h))
-                # print(str("{}, {}".format(display_width, display_height)))
-            elif event.type == pygame.QUIT:
-                quitgame()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    quitgame()
-                if event.key == pygame.K_p:
-                    leave = True
-        if leave:
-            break
+# not needed
+# def main_menu():
+#     leave = False
+#     while True:
+#         pygame.draw.rect(Env.gameDisplay, color.dark_red, [100, 100, 100, 100])
+#         for event in pygame.event.get():
+#             print(event)
+#             if leave:
+#                 break
+#             elif event.type == pygame.VIDEORESIZE:
+#                 CreateWindow(event.w, event.h)
+#                 Env.display_dims((event.w, event.h))
+#                 # print(str("{}, {}".format(display_width, display_height)))
+#             elif event.type == pygame.QUIT:
+#                 quitgame()
+#             elif event.type == pygame.KEYDOWN:
+#                 if event.key == pygame.K_LEFT:
+#                     quitgame()
+#                 if event.key == pygame.K_p:
+#                     leave = True
+#         if leave:
+#             break
+#
+#         finish_frame()
 
-        finish_frame()
-
-
+# pygame must be allowed to continue to update its elements while paused, but the simulation cannot be allowed to run,
+# so this pause function acts like a mini version of the program as a whole, to retain the control features
 def pause(objects):
     leave = False
     global step_enable
@@ -708,27 +721,44 @@ def pause(objects):
 
 
 def MainLoop():
+    #enables or disables the black background that covers the previous frame
     clear = True
+
+    # control variables
     sorting_mode = False
     shuffle_mode = False
+
+    # used to count the number of cycles of shuffle, used by the shuffle function to determine how long is long enough
     shuffle_time = 0
+    # needed as it is acessed outside of MAINLOOP
     global step_enable
+    # algorithms are initialized here to reduce load during switching
     bubble = Bubblesort()
     quick = Quicksort()
     counting = CountingsortB10()
     counting2 = CountingsortB2()
+
     # print(counting.buckets)
+    # defaults the first algorithm to bubble, so that it is never empty of an algorithm
     algorithm = bubble
+
     # number of tiles is defined here, as the first variable in this function call
+    # some good looking ones are preserved here in comments, uncomment to use that layout
     # objects = Objects(400, color.light_blue, color.violet, color.red)
-    objects = Objects(1024, color.item_yellow, color.orange, color.pink)
+    objects = Objects(100, color.item_yellow, color.orange, color.pink)
     # objects = Objects(30, color.white, color.black, color.white, color.black)
+    # begin main loop
     while True:
+        # check if we have conflicting modes, if so stop all processes
+        # this is to somewhat emulate a ternary bit, because we cant use a single bool for this
         if sorting_mode and shuffle_mode:
             sorting_mode = False
             shuffle_mode = False
+        # cover the screen in black to hide the previous frame
         if clear:
             Env.gameDisplay.fill(color.black)
+        # if step enable then pause, unpausing directly after this will allow a single loop to run, but will pause again
+        # if step enable was not disabled, stepping through a single cycle
         if step_enable:
             pause(objects)
         # get input
@@ -773,18 +803,20 @@ def MainLoop():
                 elif event.key == pygame.K_e:
                     step_enable = not step_enable
 
-
+        # called one final time this loop to account for any changes made during the input phase
         if sorting_mode and shuffle_mode:
             sorting_mode = False
             shuffle_mode = False
 
 
-        # drawing
+        # draw all the objects as they currently stand
         objects.draw(Env.gameDisplay, Env.display_dims())
 
+        # if we are currently sorting
         if sorting_mode:
-            #objects.printout()
+            # call the sorting algorithm and account for its results
             objects, finished = algorithm.sort(objects)
+            # for algorithms that require it disable the buckets at the bottom
             if finished:
                 objects.draw_buckets = False
 
@@ -793,14 +825,23 @@ def MainLoop():
                 print("the objects class reports that the sorted status of the data is : {}".format(objects.truesort()))
                 sorting_mode = False
 
+        # if we are shuffling then
         if shuffle_mode:
+            # draw the "shuffling" box
             pygame.draw.rect(Env.gameDisplay, color.dark_green, [(Env.display_width/2) -50, (Env.display_height/2) - 30, 100, 60])
             disp_text("Shuffling", (Env.display_width/2, Env.display_height/2))
+
+            # call the objects shuffle program
             objects.shuffle()
+            # account for a cycle of shuffling
             shuffle_time += 1
+
+            # this is an equation that i found scales well with object number, and always seems to produce a reasonable
+            # result that looks un-sorted
             if shuffle_time >= 2.5*objects.number_of_tiles:
                 shuffle_mode = False
                 shuffle_time = 0
+
         finish_frame()
 
 if __name__ == "__main__":
